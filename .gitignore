@@ -1,0 +1,9 @@
+polipo
+polipo\.exe
+hv3_polipo
+hv3_polipo\.exe
+core
+*.o
+polipo.html
+polipo.info
+html/
