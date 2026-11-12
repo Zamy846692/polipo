@@ -24,6 +24,9 @@ THE SOFTWARE.
 #define _GNU_SOURCE
 #endif
 
+/* Build me the version with ad-hoc hv3 hooks */
+#define HV3_BUILD
+
 #include <sys/param.h>
 
 #ifdef __MINGW32_VERSION
@@ -43,7 +46,7 @@ THE SOFTWARE.
 #include <sys/time.h>
 #include <sys/stat.h>
 #include <dirent.h>
-#ifndef MINGW
+#ifndef WIN32 /*MINGW*/
 #include <sys/mman.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -52,10 +55,14 @@ THE SOFTWARE.
 #include <netdb.h>
 #include <sys/types.h>
 #include <sys/uio.h>
-#include <sys/poll.h>
+#include <poll.h>
 #include <sys/wait.h>
 #include <sys/ioctl.h>
 #include <signal.h>
+#endif
+
+#ifdef __MINGW32__
+#define MINGW
 #endif
 
 #ifndef MAP_ANONYMOUS
@@ -162,7 +169,7 @@ THE SOFTWARE.
 #define UNALIGNED_ACCESS
 #endif
 
-#ifndef MINGW
+#ifndef WIN32 /*MINGW*/
 #define HAVE_FORK
 #ifndef NO_SYSLOG
 #define HAVE_SYSLOG

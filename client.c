@@ -22,6 +22,32 @@ THE SOFTWARE.
 
 #include "polipo.h"
 
+#ifdef HV3_BUILD
+/*
+ * Magic first socket connection that controls the lifetime of this process.
+ */
+static int magic_fd = -1;
+static int
+magic_handler(int status, FdEventHandlerPtr event)
+{
+    int rc;
+    char zBuf[256];
+
+    errno = 0;
+    printf("magic_handler\n");
+    rc = READ(magic_fd, zBuf, 255);
+    printf("rc = %d errno = %d\n", rc, errno);
+    if (rc == 0 || (rc < 0 && errno != EAGAIN)) {
+        polipoExit();
+        return 1;
+    } else if (rc > 0) {
+        WRITE(magic_fd, zBuf, rc);
+    }
+
+    return 0;
+}
+#endif
+
 static int 
 httpAcceptAgain(TimeEventHandlerPtr event)
 {
@@ -69,7 +95,9 @@ httpAccept(int fd, FdEventHandlerPtr event, AcceptRequestPtr request)
             }
             return 1;
         } else {
+#ifndef HV3_BUILD
             polipoExit();
+#endif
             return 1;
         }
     }
@@ -91,6 +119,15 @@ httpAccept(int fd, FdEventHandlerPtr event, AcceptRequestPtr request)
     rc = setNodelay(fd, 1);
     if(rc < 0) 
         do_log_error(L_WARN, errno, "Couldn't disable Nagle's algorithm");
+
+#ifdef HV3_BUILD
+    if(magic_fd < 0) {
+        do_log(D_CLIENT_CONN, "Accepted magic tcp/ip connection: %d\n", fd);
+        magic_fd = fd;
+        registerFdEvent(magic_fd, POLLIN|POLLERR, magic_handler, 0, 0);
+        return 0;
+    }
+#endif
 
     connection = httpMakeConnection();
 
@@ -1096,6 +1133,13 @@ httpClientNoticeRequest(HTTPRequestPtr request, int novalidate)
     int local, haveData;
     int rc;
 
+    int relax = relaxTransparency;
+#ifdef HV3_BUILD
+    if (request->cache_control.flags & CACHE_RELAX_TRANSPARENCY) {
+        relax = 2;
+    }
+#endif
+
     assert(!request->chandler);
 
     if(request->error_code) {
@@ -1103,7 +1147,7 @@ httpClientNoticeRequest(HTTPRequestPtr request, int novalidate)
            request->object == NULL ||
            (request->object->flags & OBJECT_LOCAL) ||
            (request->object->flags & OBJECT_ABORTED) ||
-           (relaxTransparency < 1 && !proxyOffline)) {
+           (relax < 1 && !proxyOffline)) {
             if(serveNow) {
                 connection->flags |= CONN_WRITER;
                 return httpClientRawErrorHeaders(connection,
@@ -1180,13 +1224,13 @@ httpClientNoticeRequest(HTTPRequestPtr request, int novalidate)
         validate = 0;
     else if((request->object->flags & OBJECT_FAILED) &&
             !(object->flags & OBJECT_INPROGRESS) &&
-            !relaxTransparency)
+            !relax)
         validate = 1;
     else if(request->method != METHOD_HEAD &&
             !objectHasData(object, request->from, request->to) &&
             !(object->flags & OBJECT_INPROGRESS))
         validate = 1;
-    else if(objectMustRevalidate((relaxTransparency <= 1 ? 
+    else if(objectMustRevalidate((relax <= 1 ? 
                                   request->object : NULL),
                                  &request->cache_control))
         validate = 1;

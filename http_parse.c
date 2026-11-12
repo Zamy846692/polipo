@@ -1127,6 +1127,11 @@ httpParseHeaders(int client, AtomPtr url,
                     }
                     a = atoi(buf + v_start);
                     cache_control.max_stale = a;
+#ifdef HV3_BUILD
+                } else if(token_compare(buf, token_start, token_end,
+                                        "relax-transparency")) {
+                    cache_control.flags |= CACHE_RELAX_TRANSPARENCY;
+#endif
                 } else {
                     do_log(L_WARN, "Unsupported Cache-Control directive ");
                     do_log_n(L_WARN, buf + token_start, 

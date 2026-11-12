@@ -39,7 +39,9 @@ CDEBUGFLAGS = -Os -g -Wall
 # On mingw, you need
 
 # EXE=.exe
-# LDLIBS = -lwsock32
+LDLIBS = -lws2_32
+
+POLIPO = hv3_polipo$(EXE)
 
 FILE_DEFINES = -DLOCAL_ROOT=\"$(LOCAL_ROOT)/\" \
                -DDISK_CACHE_ROOT=\"$(DISK_CACHE_ROOT)/\"
@@ -75,8 +77,8 @@ OBJS = util.o event.o io.o chunk.o atom.o object.o log.o diskcache.o main.o \
        http_parse.o parse_time.o dns.o forbidden.o \
        md5import.o ftsimport.o socks.o mingw.o
 
-polipo$(EXE): $(OBJS)
-	$(CC) $(CFLAGS) $(LDFLAGS) -o polipo$(EXE) $(OBJS) $(MD5LIBS) $(LDLIBS)
+$(POLIPO): $(OBJS)
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $(POLIPO) $(OBJS) $(MD5LIBS) $(LDLIBS)
 
 ftsimport.o: ftsimport.c fts_compat.c
 
@@ -84,7 +86,7 @@ md5import.o: md5import.c md5.c
 
 .PHONY: all install install.binary install.man
 
-all: polipo$(EXE) polipo.info html/index.html localindex.html
+all: $(POLIPO) polipo.info html/index.html localindex.html
 
 install: install.binary install.man
 
@@ -136,7 +138,7 @@ TAGS: $(SRCS)
 .PHONY: clean
 
 clean:
-	-rm -f polipo$(EXE) *.o *~ core TAGS gmon.out
+	-rm -f $(POLIPO) *.o *~ core TAGS gmon.out
 	-rm -f polipo.cp polipo.fn polipo.log polipo.vr
 	-rm -f polipo.cps polipo.info* polipo.pg polipo.toc polipo.vrs
 	-rm -f polipo.aux polipo.dvi polipo.ky polipo.ps polipo.tp

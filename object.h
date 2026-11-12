@@ -159,6 +159,16 @@ extern int log2ObjectHashTableSize;
 /* set if this object should never be combined with another resource */
 #define CACHE_MISMATCH 4096
 
+/* The following flag is set in the CacheControlRec.flags bitmask if
+ * the custom "relax-transparency" directive was seen in a Cache-Control
+ * header received from a client. It is never forwarded to a parent
+ * cache or origin server.
+ *
+ * Note: The code that uses this symbol is only active if HV3_BUILD is
+ * defined at compile-time.
+ */
+#define CACHE_RELAX_TRANSPARENCY 4096
+
 struct _HTTPRequest;
 
 void preinitObject(void);

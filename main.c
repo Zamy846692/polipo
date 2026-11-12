@@ -38,10 +38,16 @@ usage(char *argv0)
     fprintf(stderr, "  -c: specify the configuration file to use.\n");
 }
 
+static void print_port_msg(int port)
+{
+    fprintf(stdout, "polipo port is %d\n", port);
+    fflush(stdout);
+}
+
 int
 main(int argc, char **argv)
 {
-    FdEventHandlerPtr listener;
+    FdEventHandlerPtr listener = 0;
     int i;
     int rc;
     int expire = 0, printConfig = 0;
@@ -155,8 +161,23 @@ main(int argc, char **argv)
     if(pidFile)
         writePid(pidFile->string);
 
+#ifdef HV3_BUILD
+    do {
+        int p;
+        for(p = proxyPort; listener == 0 && p < (proxyPort + 50); p++) {
+            const char *zAddr = proxyAddress->string;
+            listener = create_listener((char *)zAddr, p, httpAccept, NULL);
+        }
+        if (listener) {
+            proxyPort = p - 1;
+            print_port_msg(proxyPort);
+        }
+    } while (0);
+#else
     listener = create_listener(proxyAddress->string, 
                                proxyPort, httpAccept, NULL);
+#endif
+
     if(!listener) {
         if(pidFile) unlink(pidFile->string);
         exit(1);

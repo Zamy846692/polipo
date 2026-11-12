@@ -724,7 +724,9 @@ create_listener(char *address, int port,
         return NULL;
     }
 
+#ifndef HV3_BUILD
     rc = setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, (char *)&one, sizeof(one));
+#endif
     if(rc < 0) do_log_error(L_WARN, errno, "Couldn't set SO_REUSEADDR");
 
     if(inet6) {
@@ -802,7 +804,7 @@ int
 setNonblocking(int fd, int nonblocking)
 {
 #ifdef MINGW
-    return mingw_setnonblocking(fd, nonblocking);
+    return win32_setnonblocking(fd, nonblocking);
 #else
     int rc;
     rc = fcntl(fd, F_GETFL, 0);
