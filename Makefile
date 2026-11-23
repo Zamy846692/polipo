@@ -95,7 +95,7 @@ install.binary: all
 	mkdir -p $(TARGET)$(LOCAL_ROOT)
 	mkdir -p $(TARGET)$(LOCAL_ROOT)/doc
 	rm -f $(TARGET)$(BINDIR)/polipo
-	cp -f polipo $(TARGET)$(BINDIR)/
+	cp -f $(POLIPO) $(TARGET)$(BINDIR)/
 	cp -f html/* $(TARGET)$(LOCAL_ROOT)/doc
 	cp -f localindex.html $(TARGET)$(LOCAL_ROOT)/index.html
 
